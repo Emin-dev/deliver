@@ -1,0 +1,15 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {readFile} from 'node:fs/promises';
+import {detectContainer,formatBytes,readPolicy} from '../web/domain.js';
+const values={preset:'custom','policy-name':'Client v1','policy-version':'1',width:'1920',height:'1080','min-duration':'1','max-duration':'120','max-size':'64',container:'mp4'};
+test('real generated MP4 header recognized',async()=>assert.equal(detectContainer(new Uint8Array(await readFile(new URL('../web/assets/sample.mp4',import.meta.url)))),'mp4'));
+test('names and MIME do not grant a container signature',()=>{ for(const bytes of [new Uint8Array(),new TextEncoder().encode('video/mp4'),new TextEncoder().encode('<script>alert(1)</script>')]) assert.equal(detectContainer(bytes),'unknown'); });
+test('truncated and oversized MP4 boxes rejected',()=>{for(const length of [0,1,15,200]) { const b=new Uint8Array(16);b[3]=length;b.set(new TextEncoder().encode('ftypisom'),4);assert.equal(detectContainer(b),'unknown'); }});
+test('QuickTime and unfamiliar brands remain unknown',()=>{const b=new Uint8Array(16);b[3]=16;b.set(new TextEncoder().encode('ftypqt  '),4);assert.equal(detectContainer(b),'unknown');});
+test('WebM requires EBML DocType',()=>{const b=Uint8Array.from([0x1a,0x45,0xdf,0xa3,0x87,0x42,0x82,0x84,119,101,98,109]);assert.equal(detectContainer(b),'webm');b[8]=120;assert.equal(detectContainer(b),'unknown');});
+test('malformed EBML and truncation do not loop',()=>{for(let n=0;n<12;n++){const b=Uint8Array.from([0x1a,0x45,0xdf,0xa3,0x87,0x42,0x82,0x84,119,101,98,109]).slice(0,n);assert.equal(detectContainer(b),'unknown');}});
+test('valid custom policy translates MiB and retains version',()=>{const p=readPolicy({...values,'policy-version':'7'});assert.equal(p.version,7);assert.equal(p.max_bytes,64*1024*1024);});
+test('invalid values never coerce to accepted empty or fractional dimensions',()=>{for(const [key,value] of [['width',''],['width','1.2'],['height','0'],['max-size','65'],['policy-version','0'],['max-duration','Infinity'],['max-duration','0'],['container','mov'],['policy-name',' ']]) assert.throws(()=>readPolicy({...values,[key]:value}));});
+test('range order and UTF-8 title length enforced',()=>{assert.throws(()=>readPolicy({...values,'min-duration':'121'}));assert.throws(()=>readPolicy({...values,'policy-name':'😀'.repeat(50)}));});
+test('byte formatting is binary and finite for supported inputs',()=>{assert.equal(formatBytes(1024),'1.0 KiB');assert.equal(formatBytes(1048576),'1.00 MiB');});

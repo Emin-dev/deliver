@@ -1,0 +1,42 @@
+npm warn Unknown env config "http-proxy". This will stop working in the next major version of npm.
+
+> deliver-demo@0.1.0 test
+> node --test tests/domain.test.mjs tests/wasm.test.mjs tests/static.test.mjs tests/regressions.test.mjs
+
+✔ real generated MP4 header recognized (5.245181ms)
+✔ names and MIME do not grant a container signature (0.308154ms)
+✔ truncated and oversized MP4 boxes rejected (0.195167ms)
+✔ QuickTime and unfamiliar brands remain unknown (0.146599ms)
+✔ WebM requires EBML DocType (0.240281ms)
+✔ malformed EBML and truncation do not loop (0.148124ms)
+✔ valid custom policy translates MiB and retains version (0.412922ms)
+✔ invalid values never coerce to accepted empty or fractional dimensions (0.654672ms)
+✔ range order and UTF-8 title length enforced (0.23111ms)
+✔ byte formatting is binary and finite for supported inputs (0.317058ms)
+✔ inspection reset never announces removal or steals chooser focus (2.442993ms)
+✔ meaningful progress reaches the persistent accessible live channel (1.052154ms)
+✔ explicit remove and cancel announce the actual action and return focus (1.919357ms)
+✔ deployment is explicit static, without dependency installation or Rust (111.663082ms)
+✔ exact Rust target pin and standalone prerequisite error exist (2.316967ms)
+✔ standalone WASM rebuild exits with useful instructions when Rust is absent (7.703709ms)
+✔ deployment smoke rejects a truncated public license bundle (93.723691ms)
+✔ UI does not interpolate HTML, persist user data, or load remote scripts (1.162494ms)
+✔ static CSP and deployed security headers are present (3.933156ms)
+✔ inputs use labels; validation notices and progress have accessible announcements (0.401463ms)
+✔ real production Wasm executes Rust checks (5.416578ms)
+✔ Wasm negative result respects changed requirements (0.522001ms)
+✔ Wasm unknown result never fabricates unavailable metadata (0.399001ms)
+✔ Wasm ABI enforces allocation limits (0.120526ms)
+✔ Wasm malformed JSON and hostile content stay data (0.477589ms)
+✔ repeated Wasm reports free allocations and remain deterministic (61.499829ms)
+✔ production WASM does not expose machine-specific build or cache paths (7.787022ms)
+✔ Wasm displays a just-above-limit failure without concealing the difference (0.726995ms)
+✔ Wasm displays a just-below-limit failure without concealing the difference (0.416267ms)
+ℹ tests 29
+ℹ suites 0
+ℹ pass 29
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 319.663842

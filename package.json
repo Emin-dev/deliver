@@ -1,0 +1,16 @@
+{
+  "name": "deliver-demo",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "node scripts/static-smoke.mjs",
+    "test": "node --test tests/domain.test.mjs tests/wasm.test.mjs tests/static.test.mjs tests/regressions.test.mjs",
+    "test:browser": "node tests/browser.mjs",
+    "serve": "python3 -m http.server 4174 --directory web",
+    "build:wasm": "bash scripts/build.sh"
+  },
+  "devDependencies": {
+    "playwright": "1.62.1"
+  }
+}

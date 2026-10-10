@@ -1,0 +1,6 @@
+npm warn Unknown env config "http-proxy". This will stop working in the next major version of npm.
+
+> deliver-demo@0.1.0 build
+> node scripts/static-smoke.mjs
+
+Static bundle passed: real WASM executes; 11 pinned crate notices and Rust 1.99.0 standard-library notices are packaged.
