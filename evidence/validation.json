@@ -1,0 +1,76 @@
+{
+  "status": "builder_checks_passed_browser_gate_pending",
+  "date": "2026-10-09",
+  "rust_tests": {
+    "passed": 14,
+    "failed": 0
+  },
+  "javascript_domain_tests": {
+    "passed": 10,
+    "failed": 0
+  },
+  "production_wasm_tests": {
+    "passed": 9,
+    "failed": 0,
+    "repeated_evaluations": 1000
+  },
+  "static_tests": {
+    "passed": 3,
+    "failed": 0
+  },
+  "cargo_fmt": "passed",
+  "cargo_clippy_all_targets_deny_warnings": "passed",
+  "javascript_syntax": "passed",
+  "sample_probe": "passed; see sample-probe.json",
+  "browser_suite": {
+    "status": "unrun",
+    "scenarios": 14,
+    "blocker": "Chromium IPC was unavailable in the test environment. Browser verification against an accessible hosted preview remains pending."
+  },
+  "physical_devices": "not_tested",
+  "five_independent_passes": "coordinating_task_pending",
+  "publication": "pending",
+  "wasm_bytes": 143293,
+  "sample_bytes": 14679,
+  "regression_tests": {
+    "passed": 7,
+    "failed": 0,
+    "method": "Source-level minimal DOM stubs and real Node command execution; not browser/AT execution"
+  },
+  "deployment_smoke": "passed; Node-only; executes prebuilt WASM and asserts complete served dependency notices",
+  "rust_toolchain": "1.99.0 (b940084d7 2026-09-28), pinned with wasm32 target",
+  "total_tests_passed": 43,
+  "license_packaging": {
+    "pinned_crates": 11,
+    "source_and_served_verbatim": true,
+    "rust_standard_library_notice": "1.99.0"
+  },
+  "review_fixes": [
+    "D1 neutral reset, meaningful live progress, clear/cancel/error focus return",
+    "Pinned dependency copyright/license texts in source and public bundle with packaging assertions",
+    "Explicit static Node deployment smoke; no deployment dependency installation or Rust invocation",
+    "Exact Rust pin and standalone prerequisite errors"
+  ],
+  "public_bundle_bytes": 1809784,
+  "binary_hygiene": {
+    "status": "passed",
+    "path_remapping": [
+      "project",
+      "Cargo cache",
+      "Rust toolchain"
+    ],
+    "machine_specific_paths_detected": false,
+    "fresh_rebuild_different_directory": "byte_identical",
+    "sha256": "9fc26d69d4172fe6155cd38f48c45926eb870b15fd234e073c0ceb78c75c2289"
+  },
+  "duration_boundary_display": {
+    "status": "passed",
+    "cases": [
+      "6.00001 seconds exceeds inclusive maximum 6",
+      "5.99999 seconds falls below inclusive minimum 6",
+      "6 seconds still passes either exact inclusive boundary"
+    ],
+    "comparison_semantics": "unchanged",
+    "display": "shortest faithful observed scalar and limits"
+  }
+}

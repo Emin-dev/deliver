@@ -1,0 +1,102 @@
+# Exact-revision CI for the standalone Deliver review candidate.
+# No deployment, credentials persistence, paid runner, cache or artifact upload.
+name: Deliver exact-revision checks
+
+"on":
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    # This bounded workflow is approved for standard public-repository runners only.
+    if: ${{ github.event.repository.private == false }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    defaults:
+      run:
+        shell: bash
+    env:
+      CI: "true"
+      RUSTUP_TOOLCHAIN: "1.99.0"
+      CARGO_TERM_COLOR: always
+    steps:
+      - name: Set disposable browser install path
+        run: printf 'PLAYWRIGHT_BROWSERS_PATH=%s/playwright-browsers\n' "$RUNNER_TEMP" >> "$GITHUB_ENV"
+      - name: Check out the exact requested revision
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          persist-credentials: false
+          fetch-depth: 1
+      - name: Verify checkout identity
+        env:
+          EXPECTED_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+        run: |
+          test "$(git rev-parse HEAD)" = "$EXPECTED_SHA"
+          printf 'Testing exact revision %s\n' "$EXPECTED_SHA"
+      - name: Set up pinned Node without a dependency cache
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: "24.19.0"
+          package-manager-cache: false
+      - name: Check the committed static bundle with only Node on PATH
+        timeout-minutes: 2
+        run: |
+          node --version
+          node_only="$RUNNER_TEMP/node-only-bin"
+          mkdir -p "$node_only"
+          ln -s "$(command -v node)" "$node_only/node"
+          # No Cargo, npm, Python, browser, dependency installation or network in this gate.
+          PATH="$node_only" "$node_only/node" scripts/static-smoke.mjs
+          sha256sum web/assets/deliver_core.wasm > "$RUNNER_TEMP/committed-wasm.sha256"
+      - name: Check JavaScript syntax
+        timeout-minutes: 2
+        run: |
+          node --check web/app.js
+          node --check web/domain.js
+      - name: Install the pinned Rust toolchain and WASM target
+        timeout-minutes: 5
+        run: |
+          rustup toolchain install 1.99.0 --profile minimal --component rustfmt --component clippy --target wasm32-unknown-unknown
+          rustc --version
+          cargo --version
+      - name: Check Rust formatting, strict Clippy and native tests
+        timeout-minutes: 5
+        run: |
+          cargo fmt --all -- --check
+          cargo clippy --locked --all-targets -- -D warnings
+          cargo test --locked --all-targets
+      - name: Rebuild WASM and bind it to the committed static artifact
+        timeout-minutes: 5
+        run: |
+          bash scripts/build.sh
+          # A mismatch is a failed source/artifact binding, never a reason to auto-commit.
+          sha256sum --check "$RUNNER_TEMP/committed-wasm.sha256"
+      - name: Run actual WASM and source regression suites
+        timeout-minutes: 3
+        run: |
+          node --test tests/domain.test.mjs tests/wasm.test.mjs tests/static.test.mjs tests/regressions.test.mjs
+      - name: Install locked browser tools and their Chromium
+        timeout-minutes: 6
+        run: |
+          npm ci --prefix . --ignore-scripts --no-audit --no-fund
+          node node_modules/playwright/cli.js install --with-deps chromium
+      - name: Run the real Chromium browser suite
+        timeout-minutes: 5
+        run: |
+          export CHROMIUM_PATH="$(node -e "process.stdout.write(require('./node_modules/playwright').chromium.executablePath())")"
+          "$CHROMIUM_PATH" --version
+          python3 -m http.server 4174 --bind 127.0.0.1 --directory web > "$RUNNER_TEMP/deliver-server.log" 2>&1 &
+          server_pid=$!
+          trap 'kill "$server_pid" 2>/dev/null || true' EXIT
+          curl --fail --silent --show-error --max-time 2 --retry 30 --retry-connrefused --retry-delay 1 --retry-max-time 30 http://127.0.0.1:4174/ > /dev/null
+          # Screenshots/reports remain local to the disposable runner and are not uploaded.
+          BASE_URL=http://127.0.0.1:4174 node tests/browser.mjs
