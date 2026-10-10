@@ -2,6 +2,22 @@
 
 A bounded, local-first technical review desk for a video handoff. The reusable requirements engine is Rust, compiled to WebAssembly. The static UI is plain HTML/CSS with a small JavaScript adapter for browser file, media, download, and Web Crypto APIs. No frontend framework, application server, account, database, analytics, paid service, or runtime dependency.
 
+## Try the demo
+
+[Open the Deliver demo](https://project-e257o.vercel.app/) and choose **Try a sample**. No account or setup is needed; the bundled clip is generated, silent test media.
+
+1. Keep **HD review copy · v1** selected and inspect the measured checks and technical unknowns.
+2. Leave any human QC you have not actually performed as **Not reviewed**. A silent sample cannot establish audio intelligibility.
+3. Choose **Export JSON report** and inspect it locally. The report includes the policy/version, selected-byte fingerprint and unknowns; it does not certify final delivery.
+
+Work stays in this tab and clears on reload. Export before leaving. To serve the bundle locally or change the code, see [Build and run](#build-and-run).
+
+## Feedback and small fixes
+
+[Search or open an issue](https://github.com/Emin-dev/deliver/issues) with your browser/version, exact steps, expected result and actual result. Use synthetic examples only; do not post client media, full real-world exports, private notes, secrets or security exploit details in public issues.
+
+For a small code or documentation fix, explain the change and include the relevant [build and test](#build-and-run) results, including anything you could not run. Rebuild generated WASM with the documented script when changing the Rust engine, and preserve sample provenance and license notices.
+
 ## What works
 
 1. Choose one local MP4/WebM file (or the bundled, generated silent test clip).
@@ -82,8 +98,8 @@ The browser suite uses Playwright 1.62.1; set `CHROMIUM_PATH` to a supported ins
 - Rust formatting and Clippy with warnings denied: passed.
 - JavaScript syntax checks: passed.
 - `ffprobe` independently verified the fixture's 1920×1080 H.264 stream, 24 fps, 6-second duration, and 14,679-byte file. This is fixture-generation evidence only, not a browser capability claim.
-- **Browser UI suite: not run to completion.** Shell Chromium was blocked by local socket restrictions, including after reviewed escalation; the cloud browser could not reach the executor's local HTTP server. Root-owned preview publication and browser QA are pending. No screenshot or real-device test is claimed.
-- Five independent quality-review passes and live Vercel deployment verification belong to the coordinating task and are not claimed here.
+- **Recorded build-environment browser UI suite: not run to completion.** Shell Chromium was blocked by local socket restrictions, including after reviewed escalation; the cloud browser could not reach the executor's local HTTP server. This historical result does not cover the separately hosted demo. The hosted sample/export walkthrough is a smoke check, not a full browser-suite or real-device pass.
+- Five independent quality-review passes are outside the build verification recorded here.
 
 `evidence/validation.json` records the actual status and `evidence/source-manifest.sha256` fingerprints the tested sources and public assets. `tests/browser.mjs` specifies 14 end-to-end scenarios, but the existence of this script is not evidence they passed.
 
