@@ -1,7 +1,9 @@
 import {createRequire} from 'node:module';
 const {chromium}=createRequire(import.meta.url)('playwright');
 import assert from 'node:assert/strict';
-import {readFile,writeFile,mkdir} from 'node:fs/promises';
+import {readFile,writeFile,mkdir,mkdtemp,open,rm} from 'node:fs/promises';
+import {tmpdir} from 'node:os';
+import {join} from 'node:path';
 import {createHash} from 'node:crypto';
 const root=new URL('../',import.meta.url).pathname;
 const base=process.env.BASE_URL||'http://127.0.0.1:4174';
@@ -20,7 +22,23 @@ await test('real sample metadata and Rust checks',async()=>{await page.locator('
 await test('human QC export includes evidence, unknowns and self-report',async()=>{await page.locator('#manual-picture').selectOption('pass');await page.locator('#review-note').fill('Synthetic test, follow up on captions.');const wait=page.waitForEvent('download');await page.locator('#export').click();const download=await wait;const report=JSON.parse(await readFile(await download.path(),'utf8'));assert.equal(report.engine,'deliver-core/0.1.0');assert.equal(report.policy.version,1);assert.equal(report.unknown,5);assert.equal(report.human_qc[0].status,'pass');assert.equal(report.human_qc[1].status,'unknown');assert.equal(report.final_delivery_approval,'not_certified');assert.match(report.handoff_notes,/Synthetic/);await writeFile(root+'evidence/sample-evidence.json',JSON.stringify(report,null,2)+'\n');});
 await test('versioned preset mismatch invalidates human approval',async()=>{await page.locator('#preset').selectOption('vertical');assert.equal(await page.locator('#fail-count').textContent(),'2');assert.equal(await page.locator('#manual-picture').inputValue(),'unknown');assert.equal(await page.locator('#review-note').inputValue(),'');await page.screenshot({path:root+'evidence/desktop-reviewed.png',fullPage:true});});
 await test('custom policy errors disable stale export then recover',async()=>{await page.locator('#preset').selectOption('custom');await page.locator('#min-duration').fill('120');await page.locator('#max-duration').fill('60');assert.equal(await page.locator('#export').isDisabled(),true);assert.equal(await page.locator('#error').isVisible(),true);await page.locator('#min-duration').fill('1');await page.locator('#width').fill('1920');await page.locator('#height').fill('1080');await page.locator('#policy-version').fill('3');assert.equal(await page.locator('#export').isDisabled(),false);assert.equal(await page.locator('#fail-count').textContent(),'0');});
-await test('invalid MIME-spoofed, empty, and oversized inputs rejected',async()=>{for(const [name,buffer,expected] of [['fake.mp4',Buffer.from('<script>alert(1)</script>'),'supported MP4'],['empty.mp4',Buffer.alloc(0),'non-empty'],['big.mp4',Buffer.alloc(64*1024*1024+1),'64 MiB']]){await page.locator('#file-input').setInputFiles({name,mimeType:'video/mp4',buffer});await page.waitForFunction(expected=>document.querySelector('#error').textContent.includes(expected),expected);assert.equal(await page.locator('#export').isDisabled(),true);}});
+await test('invalid MIME-spoofed, empty, and oversized inputs rejected',async()=>{
+for(const [name,buffer,expected] of [['fake.mp4',Buffer.from('<script>alert(1)</script>'),'supported MP4'],['empty.mp4',Buffer.alloc(0),'non-empty']]){
+await page.locator('#file-input').setInputFiles({name,mimeType:'video/mp4',buffer});
+await page.waitForFunction(expected=>document.querySelector('#error').textContent.includes(expected),expected);
+assert.equal(await page.locator('#export').isDisabled(),true);
+}
+// Playwright limits in-memory uploads to 50 MiB. A temporary sparse file tests
+// the application's actual 64 MiB boundary without weakening either limit.
+const directory=await mkdtemp(join(tmpdir(),'deliver-oversized-'));
+try{
+const path=join(directory,'big.mp4');const file=await open(path,'w');
+try{await file.truncate(64*1024*1024+1);}finally{await file.close();}
+await page.locator('#file-input').setInputFiles(path);
+await page.waitForFunction(()=>document.querySelector('#error').textContent.includes('64 MiB'));
+assert.equal(await page.locator('#export').isDisabled(),true);
+}finally{await rm(directory,{recursive:true,force:true});}
+});
 await test('MIME mismatch is harmless: genuine bytes still inspected',async()=>{await page.locator('#preset').selectOption('hd');await page.locator('#file-input').setInputFiles({name:'not-really-an-image.jpg',mimeType:'image/jpeg',buffer:await readFile(root+'web/assets/sample.mp4')});await page.locator('#results').waitFor({state:'visible'});assert.equal(await page.locator('#pass-count').textContent(),'6');});
 await test('remove file clears report and preview resources',async()=>{await page.locator('#clear').click();assert.equal(await page.locator('#results').isVisible(),false);assert.equal(await page.locator('#export').isDisabled(),true);assert.equal(await page.locator('#preview').getAttribute('src'),null);assert.equal(await page.evaluate(()=>document.activeElement.id),'file-input');assert.match(await page.locator('#live-status').textContent(),/File removed/);});
 await test('cancel sample loading prevents stale completion',async()=>{await page.route('**/assets/sample.mp4',async route=>{await new Promise(r=>setTimeout(r,700));try{await route.continue();}catch{}});await page.locator('#sample').click();assert.match(await page.locator('#live-status').textContent(),/Loading the bundled generated sample/);await page.locator('#cancel').click();assert.equal(await page.evaluate(()=>document.activeElement.id),'file-input');await page.waitForTimeout(1000);assert.equal(await page.locator('#results').isVisible(),false);assert.equal(await page.locator('#export').isDisabled(),true);assert.match(await page.locator('#session-note').textContent(),/canceled/);await page.unroute('**/assets/sample.mp4');});
