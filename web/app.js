@@ -47,7 +47,7 @@ function showReport() {
   $('step2').classList.add('active'); $('step3').classList.add('active');
   $('pass-count').textContent = report.pass; $('fail-count').textContent = report.fail; $('unknown-count').textContent = report.unknown;
   $('result-banner').classList.toggle('has-fail', report.fail > 0);
-  $('result-icon').textContent = report.fail ? '!' : '◌';
+  $('result-icon').dataset.state = report.fail ? 'fail' : 'review';
   $('outcome').textContent = report.fail ? 'A few details need attention.' : report.unknown > 5 ? 'Limited inspection. More checks needed.' : 'Supported checks pass. Review still needed.';
   $('outcome-detail').textContent = report.fail ? `${report.fail} requirement${report.fail === 1 ? '' : 's'} not met. ${report.unknown} technical checks remain unknown.` : `${report.pass} supported checks pass. ${report.unknown} technical checks remain unknown.`;
   $('hash').textContent = report.asset.sha256 || 'Not available';
