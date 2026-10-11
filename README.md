@@ -59,7 +59,20 @@ A future owner-run Rust controller could invoke established tools such as FFmpeg
 
 ## Build and run
 
-For serving the checked-in bundle or deploying it, only Node.js 20+ is needed for the static smoke check. Python 3 is used by the optional local server command. Rebuilding the engine requires the exact Rust **1.99.0** toolchain declared in `rust-toolchain.toml`, with `rustfmt`, `clippy`, and the `wasm32-unknown-unknown` target. Install these using the official rustup toolchain, and put cargo/rustc on PATH. There is no dependency on a sibling tooling directory.
+### Try the checked-in bundle (no Rust)
+
+From the repository root, with Node.js 20+ and Python 3 installed:
+
+```sh
+node scripts/static-smoke.mjs
+python3 -m http.server 4174 --bind 127.0.0.1 --directory web
+```
+
+Open `http://127.0.0.1:4174` and choose **Try a sample**. This route checks and serves the included WASM; no Rust toolchain or npm installation is required. The local server binds only to loopback. Stop it with Ctrl+C when finished.
+
+### Rebuild the engine
+
+Rebuilding the engine requires the exact Rust **1.99.0** toolchain declared in `rust-toolchain.toml`, with `rustfmt`, `clippy`, and the `wasm32-unknown-unknown` target. Install these using the official rustup toolchain, and put cargo/rustc on PATH. There is no dependency on a sibling tooling directory.
 
 ```sh
 rustup toolchain install 1.99.0 --profile minimal --component rustfmt --component clippy --target wasm32-unknown-unknown
