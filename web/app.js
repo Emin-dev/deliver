@@ -142,8 +142,11 @@ async function inspect(file, fileOrigin = 'user_selected') {
     observation = { filename:file.name, bytes:file.size, container, ...metadata, sha256 };
     origin = fileOrigin;
     showReport();
-    previewUrl = URL.createObjectURL(file); $('preview').src = previewUrl; $('preview').hidden = !!metadataWarning;
-    $('preview-note').hidden = !!metadataWarning;
+    // A failed or timed-out probe must not start another unbounded media load.
+    if (!metadataWarning) {
+      previewUrl = URL.createObjectURL(file); $('preview').src = previewUrl; $('preview').hidden = false;
+      $('preview-note').hidden = false;
+    }
     $('file-summary').textContent = `${formatBytes(file.size)} · ${metadata.width && metadata.height ? `${metadata.width} × ${metadata.height}` : 'Dimensions unknown'} · ${metadata.duration_seconds ? `${metadata.duration_seconds.toFixed(2)} s` : 'Duration unknown'}${fileOrigin === 'generated_sample' ? ' · Generated test clip' : ''}`;
     if (metadataWarning) { message(metadataWarning); announce(`Limited inspection complete. ${metadataWarning} ${report.pass} checks pass, ${report.fail} need work, and ${report.unknown} remain unknown.`); } else if (fileOrigin === 'generated_sample') message('Sample: a generated, silent 6-second test clip. No customer media or claimed real-world delivery is included.');
   } catch (e) { if (current()) { observation = null; hideResults(); message(e.message || 'The file could not be inspected.', 'error'); $('selected-panel').hidden = true; $('drop-zone').hidden = false; releasePreview(); announce('Inspection could not finish. ' + e.message); $('file-input').focus(); } }
