@@ -6,6 +6,8 @@ A bounded, local-first technical review desk for a video handoff. The reusable r
 
 [Open the Deliver demo](https://project-e257o.vercel.app/) and choose **Try a sample**. No account or setup is needed; the bundled clip is generated, silent test media.
 
+For a step-by-step exercise with expected report fields and limitations, see the [first-use guide](docs/FIRST-USE.md).
+
 1. Keep **HD review copy · v1** selected and inspect the measured checks and technical unknowns.
 2. Leave any human QC you have not actually performed as **Not reviewed**. A silent sample cannot establish audio intelligibility.
 3. Choose **Export JSON report** and inspect it locally. The report includes the policy/version, selected-byte fingerprint and unknowns; it does not certify final delivery.
